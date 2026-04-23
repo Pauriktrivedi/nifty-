@@ -1,0 +1,12 @@
+requests
+sqlalchemy
+fastapi
+uvicorn
+python-dotenv
+pandas
+apscheduler
+pytz
+rich
+aiohttp
+jinja2
+fyers-apiv3
