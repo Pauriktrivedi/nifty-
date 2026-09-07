@@ -1,0 +1,12 @@
+data/
+
+data/
+__MACOSX/
+__pycache__/
+*.pyc
+*.log
+*.db*
+tests/__pycache__/
+strategies/__pycache__/
+database/__pycache__/
+core/__pycache__/
