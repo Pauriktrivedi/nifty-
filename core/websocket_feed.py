@@ -30,53 +30,78 @@ def _patched_response_output(self, data: str, data_type: str) -> object:
     try:
         data_resp = data
         precision_calcu_value = [
-            "ltp", "bid_price", "ask_price", "avg_trade_price",
-            "low_price", "high_price", "lower_ckt", "upper_ckt", "prev_close_price"
-        ]
-
+                                "ltp",
+                                "bid_price",
+                                "ask_price",
+                                "avg_trade_price",
+                                "low_price",
+                                "high_price",
+                                "open_price",
+                                "prev_close_price",
+                            ]
         response = {}
-        if data_type == "depth":
-            for i, val in enumerate(self.depthvalue):
-                if val in data_resp and val in precision_calcu_value:
+        if (
+            "bidPrice1" not in data_resp
+            # and "vol_traded_today" in data_resp
+            and self.lite
+        ):
+            for i, val in enumerate(self.lite_val):
+                if val in data_resp and val == "ltp":
                     response[val] = data_resp[val] / (
-                        (10 ** data_resp["precision"]) * data_resp["multiplier"]
-                    )
-                elif val in data_resp:
+                            (10 ** data_resp["precision"] ) * data_resp["multiplier"]
+                        )
+                else:
                     response[val] = data_resp[val]
-        elif data_type == "scrips":
-            for i, val in enumerate(self.data_val):
-                if val in data_resp and val in precision_calcu_value and val not in ["upper_ckt", "lower_ckt"]:
-                    response[val] = data_resp[val] / (
-                        (10 ** data_resp["precision"]) * data_resp["multiplier"]
-                    )
-                elif val in data_resp:
-                    response[val] = data_resp[val]
-
-            response["lower_ckt"] = 0
-            response["upper_ckt"] = 0
-            if "prev_close_price" in response and "ltp" in response and response["prev_close_price"] != 0:
-                response["ch"] = round((response['ltp'] - response['prev_close_price']), 4)
-                response["chp"] = round((response["ch"] / response['prev_close_price'] * 100), 4)
-            # monkey-patch: Do not pop 'OI' here!
-            # if "OI" in response:
-            #     response.pop("OI")
-            if "Yhigh" in response:
-                response.pop("Yhigh")
-            if "Ylow" in response:
-                response.pop("Ylow")
+            if "prev_close_price" in response and "ltp" in response:
+                response["ch"] = round((response['ltp']  - response['prev_close_price']),2)
+                response["chp"] = round((response["ch"]  / response['prev_close_price'] * 100) , 2)
         else:
-            for i, val in enumerate(self.index_val):
-                if val in data_resp and i in [0, 1, 3, 4, 5]:
-                    response[val] = data_resp[val] / (
-                        (10 ** data_resp["precision"]) * data_resp["multiplier"]
-                    )
-                elif val in data_resp:
-                    response[val] = data_resp[val]
-                if "prev_close_price" in response and "ltp" in response:
-                    response["ch"] = round((response['ltp'] - response['prev_close_price']), 2)
-                    response["chp"] = round((response["ch"] / response['prev_close_price'] * 100), 2)
+            if data_type == "depth":
+
+                for i, val in enumerate(self.depthvalue):
+                    if val in data_resp and i < 10:
+                        response[val] = data_resp[val] / ((
+                            10 ** data_resp["precision"] ) * data_resp["multiplier"])
+
+                    elif val in data_resp:
+                        response[val] = data_resp[val]
+            elif data_type == "scrips":
+                for i, val in enumerate(self.data_val):
+                    if val in data_resp and val in precision_calcu_value and val not in ["upper_ckt", "lower_ckt"]:
+                        response[val] = data_resp[val] / (
+                            (10 ** data_resp["precision"] )* data_resp["multiplier"]
+                        )
+                        # response[val] = data_resp[val] / (
+
+                    elif val in data_resp:
+                        response[val] = data_resp[val]
+
+                response["lower_ckt"] = 0
+                response["upper_ckt"] = 0
+                if "prev_close_price" in response and "ltp" in response and response["prev_close_price"] != 0:
+                    response["ch"] = round((response['ltp']  - response['prev_close_price']),4)
+                    response["chp"] = round((response["ch"]  / response['prev_close_price'] * 100) , 4)
+                # monkey-patch: Do not pop 'OI' here!
+                # if "OI" in response:
+                #     response.pop("OI")
+                if "Yhigh" in response:
+                    response.pop("Yhigh")
+                if "Ylow" in response:
+                    response.pop("Ylow")
+            else:
+                for i, val in enumerate(self.index_val):
+                    if val in data_resp and i in [0, 1, 3, 4, 5]:
+                        response[val] = data_resp[val] / (
+                            (10 ** data_resp["precision"] ) * data_resp["multiplier"]
+                        )
+                    elif val in data_resp:
+                        response[val] = data_resp[val]
+                    if "prev_close_price" in response and "ltp" in response:
+                        response["ch"] = round((response['ltp']  - response['prev_close_price']),2)
+                        response["chp"] = round((response["ch"]  / response['prev_close_price'] * 100) , 2)
 
         self.On_message(response)
+
     except Exception as e:
         self.data_logger.exception(e)
 
